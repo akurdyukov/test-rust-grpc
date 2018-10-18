@@ -1,0 +1,26 @@
+[package]
+name = "test-grpc"
+version = "0.1.0"
+authors = ["Alik Kurdyukov <akurdyukov@gmail.com>"]
+build = "build.rs"
+
+[lib]
+name = "protos"
+path = "src/protos/mod.rs"
+
+[[bin]]
+name = "server"
+path = "src/server.rs"
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
+
+[dependencies]
+futures = "0.1.25"
+grpcio = { version = "0.4", default-features = false, features = ["protobuf-codec"] }
+protobuf = "2.0.5"
+log = "0.4"
+
+[build-dependencies]
+protoc-grpcio = "0.2.1"

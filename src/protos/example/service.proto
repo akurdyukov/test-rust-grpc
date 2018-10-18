@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package example;
+
+message Empty {}
+
+service Executor {
+  rpc Execute(Command) returns (Empty);
+  rpc Subscribe(Empty) returns (stream CommandResult);
+}
+
+message Command {
+  uint64 command_id = 1;
+  string user = 2;
+}
+
+message Moment {
+  uint64 moment = 1; // in nanoseconds
+}
+
+message CommandResult {
+  uint64 command_id = 1;
+  Moment moment = 2;
+}
