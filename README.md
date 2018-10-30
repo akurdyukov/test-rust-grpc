@@ -21,4 +21,5 @@ grpcc -i -p ./src/protos/example/service.proto --address 127.0.0.1:9000 --eval '
 ## TODO
 
 [ ] Correct client unsubscription
+[ ] Sometimes server does not answer, fix that
 [ ] Use headers for user_id

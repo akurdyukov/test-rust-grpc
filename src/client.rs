@@ -25,9 +25,15 @@ fn subscribe(client: &ExecutorClient) {
         loop {
             let f = subscribe.into_future();
             match f.wait() {
-                Ok((Some(result), s)) => {
-                    subscribe = s;
-                    println!("Result: {:?}", result);
+                Ok((Some(result), mut s)) => {
+                    // force close on command no
+                    if result.command_id == 50 {
+                        s.cancel();
+                        break;
+                    } else {
+                        subscribe = s;
+                        println!("Result: {:?}", result);
+                    }
                 },
                 Ok((None, _)) => break,
                 Err((e, _)) => panic!("Failed: {:?}", e)
@@ -50,7 +56,7 @@ fn main() {
     subscribe(&client);
 
     // execution
-    for i in 0..1000 {
+    for i in 0..60 {
         let mut command = Command::new();
         command.command_id = i;
         command.user = String::from("user1");

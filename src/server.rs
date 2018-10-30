@@ -141,6 +141,16 @@ impl Broadcaster {
         }
     }
 
+    fn unsubscribe(&self, user: String) {
+        let mut map = self.user_subscriptions.write().unwrap();
+
+        match map.remove(&user) {
+            None => warn!("Nothing removed for {}", user.clone()),
+            Some(_) => info!("Subscription was removed for {}", user.clone())
+        }
+
+    }
+
     fn get_sender(&self) -> sync::mpsc::Sender<CommandResult> {
         self.sender.clone()
     }
@@ -183,13 +193,28 @@ impl Executor for ExecutorService {
         self.broadcaster.subscribe(req.user.clone(), sender);
 
         let receiver2 = receiver
-                .map(|v| (v, WriteFlags::default()))
+                .map(|v| {
+                    info!("Sending {:?} to client", v.clone());
+                    (v, WriteFlags::default())
+                })
                 .map_err::<Error, _>(|()| { Error::RemoteStopped });
 
+        let user = req.user.clone();
+        let broadcaster = self.broadcaster.clone();
         let f = resp
             .send_all(receiver2)
-            .map(|_| { println!("Data sent")})
-            .map_err(|e| error!("failed to handle subscribe request: {:?}", e));
+            .map(|_| { info!("Data sent")})
+            .map_err(move |e| {
+                match e {
+                    Error::RemoteStopped => {
+                        info!("Remote unsubscribed");
+                        broadcaster.unsubscribe(user);
+                    }
+                    _ => {
+                        error!("failed to handle subscribe request: {:?}", e);
+                    }
+                }
+            });
 
         ctx.spawn(f)
     }
@@ -219,7 +244,7 @@ fn main() {
         for &(ref host, port) in server.bind_addrs() {
             println!("listening on {}:{}", host, port);
         }
-        
+
         let (tx, rx) = oneshot::channel();
         thread::spawn(move || {
             println!("Press ENTER to exit...");
